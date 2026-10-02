@@ -30,6 +30,7 @@ h1 { margin: 0; }
 .meta { color: var(--muted); font-size: 0.85em; font-weight: normal; }
 .error { color: var(--bad); }
 
+.group-title { text-align: center; margin: 24px 0 0; font-size: 1.2rem; }
 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0; }
 @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
 fieldset { border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin: 0; min-width: 0; }

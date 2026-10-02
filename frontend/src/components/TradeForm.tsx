@@ -5,12 +5,23 @@ import { PlayerSearch } from './PlayerSearch'
 
 type Section = 'giving' | 'receiving' | 'my_roster' | 'their_roster'
 
-const SECTIONS: { key: Section; title: string; optional: boolean }[] = [
-  { key: 'giving', title: 'I give', optional: false },
-  { key: 'receiving', title: 'I receive', optional: false },
-  { key: 'my_roster', title: 'My roster', optional: true },
-  { key: 'their_roster', title: "Their roster", optional: true },
+const TITLES: Record<Section, string> = {
+  giving: 'I give',
+  receiving: 'I receive',
+  my_roster: 'My roster',
+  their_roster: 'Their roster',
+}
+
+const GROUPS: { title: string; keys: Section[] }[] = [
+  { title: 'Trade Offer', keys: ['giving', 'receiving'] },
+  { title: 'Team Rosters (optional)', keys: ['my_roster', 'their_roster'] },
 ]
+
+// Players in the trade offer belong to a roster: what I give is on mine, what I receive is on theirs.
+const ROSTER_FOR: Partial<Record<Section, Section>> = {
+  giving: 'my_roster',
+  receiving: 'their_roster',
+}
 
 interface Props {
   players: Player[]
@@ -38,9 +49,21 @@ export function TradeForm({ players, pending, onSubmit }: Props) {
     return new Set(selected[key].map((p) => p.id))
   }
 
-  const add = (key: Section, p: Player) => setSelected((s) => ({ ...s, [key]: [...s[key], p] }))
+  const add = (key: Section, p: Player) =>
+    setSelected((s) => {
+      const next = { ...s, [key]: [...s[key], p] }
+      const roster = ROSTER_FOR[key]
+      if (roster && !s[roster].some((r) => r.id === p.id)) next[roster] = [...s[roster], p]
+      return next
+    })
+
   const remove = (key: Section, id: number) =>
-    setSelected((s) => ({ ...s, [key]: s[key].filter((p) => p.id !== id) }))
+    setSelected((s) => {
+      const next = { ...s, [key]: s[key].filter((p) => p.id !== id) }
+      const roster = ROSTER_FOR[key]
+      if (roster) next[roster] = s[roster].filter((p) => p.id !== id)
+      return next
+    })
 
   const canSubmit = selected.giving.length > 0 && selected.receiving.length > 0 && !pending
 
@@ -59,22 +82,25 @@ export function TradeForm({ players, pending, onSubmit }: Props) {
 
   return (
     <form onSubmit={submit}>
-      <div className="grid">
-        {SECTIONS.map(({ key, title, optional }) => (
-          <fieldset key={key}>
-            <legend>
-              {title} {optional && <span className="meta">(optional)</span>}
-            </legend>
-            <PlayerSearch
-              label={`Search ${title}`}
-              players={players}
-              excludedIds={excludedFor(key)}
-              onSelect={(p) => add(key, p)}
-            />
-            <PlayerList players={selected[key]} onRemove={(id) => remove(key, id)} />
-          </fieldset>
-        ))}
-      </div>
+      {GROUPS.map(({ title, keys }) => (
+        <section key={title}>
+          <h2 className="group-title">{title}</h2>
+          <div className="grid">
+            {keys.map((key) => (
+              <fieldset key={key}>
+                <legend>{TITLES[key]}</legend>
+                <PlayerSearch
+                  label={`Search ${TITLES[key]}`}
+                  players={players}
+                  excludedIds={excludedFor(key)}
+                  onSelect={(p) => add(key, p)}
+                />
+                <PlayerList players={selected[key]} onRemove={(id) => remove(key, id)} />
+              </fieldset>
+            ))}
+          </div>
+        </section>
+      ))}
       <label className="format">
         League format <span className="meta">(optional, e.g. "Superflex, TE premium")</span>
         <input
