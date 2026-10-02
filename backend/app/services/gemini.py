@@ -8,7 +8,7 @@ from app.models import Player, TradeAnalysis
 
 SYSTEM_PROMPT = """You are an expert fantasy football analyst grading a proposed trade.
 Grade the trade from the perspective of the user ("me"): the players I give away versus the players I receive.
-Assume a standard 12-team PPR redraft league unless a league format is provided.
+Assume a standard 10-team PPR redraft league unless a league format is provided.
 Consider current-season value, positional scarcity, injury risk, schedule, and team situation.
 Grade scale: A+ (clear win for me) through F (clear loss for me). Verdict is one of accept, reject, counter.
 Only fill roster_impact if at least one roster is provided; otherwise set it to null.
@@ -33,7 +33,7 @@ def build_prompt(
 ) -> str:
     parts = [
         f"NFL season: {settings.nfl_season}",
-        f"League format: {league_format or 'Standard 12-team PPR redraft'}",
+        f"League format: {league_format or 'Standard 10-team PPR redraft'}",
         f"Players I GIVE:\n{_fmt(giving)}",
         f"Players I RECEIVE:\n{_fmt(receiving)}",
     ]
