@@ -12,9 +12,13 @@ const TITLES: Record<Section, string> = {
   their_roster: 'Their roster',
 }
 
-const GROUPS: { title: string; keys: Section[] }[] = [
+const GROUPS: { title: string; keys: Section[]; note?: string }[] = [
   { title: 'Trade Offer', keys: ['giving', 'receiving'] },
-  { title: 'Team Rosters (optional)', keys: ['my_roster', 'their_roster'] },
+  {
+    title: 'Team Rosters (optional)',
+    keys: ['my_roster', 'their_roster'],
+    note: 'Optionally fill out the team rosters and league format for even better analysis.',
+  },
 ]
 
 // Players in the trade offer belong to a roster: what I give is on mine, what I receive is on theirs.
@@ -90,9 +94,10 @@ export function TradeForm({ players, pending, onSubmit }: Props) {
 
   return (
     <form onSubmit={submit}>
-      {GROUPS.map(({ title, keys }) => (
+      {GROUPS.map(({ title, keys, note }) => (
         <section key={title}>
           <h2 className="group-title">{title}</h2>
+          {note && <p className="group-note">{note}</p>}
           <div className="grid">
             {keys.map((key) => (
               <fieldset key={key}>
@@ -114,6 +119,7 @@ export function TradeForm({ players, pending, onSubmit }: Props) {
         <input
           type="text"
           maxLength={200}
+          placeholder="Standard 10-team PPR redraft"
           value={leagueFormat}
           onChange={(e) => setLeagueFormat(e.target.value)}
         />
