@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import type { Player, TradeRequest } from '../api/client'
 import { PlayerList } from './PlayerList'
 import { PlayerSearch } from './PlayerSearch'
@@ -23,6 +23,11 @@ const ROSTER_FOR: Partial<Record<Section, Section>> = {
   receiving: 'their_roster',
 }
 
+const SIDE: Record<'mine' | 'theirs', Section[]> = {
+  mine: ['giving', 'my_roster'],
+  theirs: ['receiving', 'their_roster'],
+}
+
 interface Props {
   players: Player[]
   pending: boolean
@@ -38,19 +43,22 @@ export function TradeForm({ players, pending, onSubmit }: Props) {
   })
   const [leagueFormat, setLeagueFormat] = useState('')
 
-  // A player can't be on both sides of the trade, nor twice on the same roster.
-  const tradeIds = useMemo(
-    () => new Set([...selected.giving, ...selected.receiving].map((p) => p.id)),
-    [selected.giving, selected.receiving],
-  )
+  // A player belongs to one team: mine (I give + my roster) or theirs (I receive + their roster).
+  // Anyone on one team is unavailable to the other, and can't be added twice to the same list.
+  const idsOf = (keys: Section[]) => new Set(keys.flatMap((k) => selected[k].map((p) => p.id)))
+  const mine = idsOf(SIDE.mine)
+  const theirs = idsOf(SIDE.theirs)
 
   const excludedFor = (key: Section) => {
-    if (key === 'giving' || key === 'receiving') return tradeIds
-    return new Set(selected[key].map((p) => p.id))
+    const other = SIDE.mine.includes(key) ? theirs : mine
+    return new Set([...other, ...selected[key].map((p) => p.id)])
   }
 
   const add = (key: Section, p: Player) =>
     setSelected((s) => {
+      const side = SIDE.mine.includes(key) ? SIDE.theirs : SIDE.mine
+      if (side.some((k) => s[k].some((x) => x.id === p.id))) return s
+      if (s[key].some((x) => x.id === p.id)) return s
       const next = { ...s, [key]: [...s[key], p] }
       const roster = ROSTER_FOR[key]
       if (roster && !s[roster].some((r) => r.id === p.id)) next[roster] = [...s[roster], p]
