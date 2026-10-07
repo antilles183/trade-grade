@@ -26,6 +26,15 @@ npm install
 npm run dev            # http://localhost:5173, proxies /api to :8000
 ```
 
+## Docker (backend)
+
+```bash
+cp backend/.env.example backend/.env   # set GEMINI_API_KEY (skip if already done)
+docker compose up --build
+```
+
+The API is then on `http://localhost:8000`. Secrets come from `backend/.env` at runtime and are not baked into the image. Stop any local `uvicorn` on port 8000 first.
+
 ## API
 
 - `GET /api/players`: all fantasy-relevant players (QB/RB/WR/TE/K/D/ST), cached 12h, sorted by ownership.
