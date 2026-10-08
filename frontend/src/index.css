@@ -38,6 +38,7 @@ main { max-width: 860px; margin: 0 auto; padding: 24px 16px 64px; }
 h1 { margin: 0; }
 .meta { color: var(--muted); font-size: 0.85em; font-weight: normal; }
 .error { color: var(--bad); }
+.notice { color: var(--mid); background: var(--surface); border-radius: 6px; padding: 8px 12px; }
 
 .group-title { text-align: center; margin: 24px 0 0; font-size: 1.2rem; }
 .group-note { text-align: center; margin: 4px 0 0; color: var(--muted); font-size: 0.9em; }

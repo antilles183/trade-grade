@@ -1,6 +1,8 @@
 import pytest
 from fastapi.testclient import TestClient
 
+from google.genai import errors
+
 from app.main import app
 from app.models import TradeAnalysis
 from app.services import gemini, players
@@ -92,3 +94,48 @@ def test_analyze_gemini_error(client, monkeypatch):
     resp = client.post("/api/trades/analyze", json={"giving": [2], "receiving": [1]})
     assert resp.status_code == 502
     assert resp.json()["detail"] == "Gemini request timed out."
+
+
+class _FakeModels:
+    def __init__(self, exc):
+        self.exc = exc
+
+    async def generate_content(self, **kwargs):
+        raise self.exc
+
+
+def _patch_gemini_failure(monkeypatch, exc):
+    class FakeClient:
+        def __init__(self, **kwargs):
+            self.aio = type("Aio", (), {"models": _FakeModels(exc)})()
+
+    monkeypatch.setattr(gemini.genai, "Client", FakeClient)
+    monkeypatch.setattr(gemini.settings, "gemini_api_key", "test-key")
+
+
+def test_analyze_gemini_api_error_shows_only_message(client, monkeypatch):
+    exc = errors.ServerError(
+        503, {"error": {"code": 503, "message": "High demand.", "status": "UNAVAILABLE"}}
+    )
+    _patch_gemini_failure(monkeypatch, exc)
+    resp = client.post("/api/trades/analyze", json={"giving": [2], "receiving": [1]})
+    assert resp.status_code == 503
+    assert resp.headers["retry-after"] == "5"
+    assert resp.json()["detail"] == "High demand."
+
+
+def test_analyze_non_503_api_error_is_502(client, monkeypatch):
+    exc = errors.ClientError(
+        404, {"error": {"code": 404, "message": "Model not found.", "status": "NOT_FOUND"}}
+    )
+    _patch_gemini_failure(monkeypatch, exc)
+    resp = client.post("/api/trades/analyze", json={"giving": [2], "receiving": [1]})
+    assert resp.status_code == 502
+    assert resp.json()["detail"] == "Model not found."
+
+
+def test_analyze_unexpected_error_is_generic(client, monkeypatch):
+    _patch_gemini_failure(monkeypatch, RuntimeError("secret internals"))
+    resp = client.post("/api/trades/analyze", json={"giving": [2], "receiving": [1]})
+    assert resp.status_code == 502
+    assert resp.json()["detail"] == "Gemini request failed. Please try again."

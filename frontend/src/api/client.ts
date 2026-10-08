@@ -26,6 +26,15 @@ export interface TradeAnalysis {
   suggested_counter: string | null
 }
 
+export class ApiError extends Error {
+  status: number
+
+  constructor(message: string, status: number) {
+    super(message)
+    this.status = status
+  }
+}
+
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, init)
   if (!res.ok) {
@@ -37,7 +46,7 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
     } catch {
       // non-JSON error body; keep the generic message
     }
-    throw new Error(detail)
+    throw new ApiError(detail, res.status)
   }
   return res.json()
 }

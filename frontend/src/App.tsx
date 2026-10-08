@@ -1,6 +1,6 @@
 import { AnalysisResult } from './components/AnalysisResult'
 import { TradeForm } from './components/TradeForm'
-import { useAnalyzeTrade } from './hooks/useAnalyzeTrade'
+import { MAX_RETRIES, useAnalyzeTrade } from './hooks/useAnalyzeTrade'
 import { usePlayers } from './hooks/usePlayers'
 
 export default function App() {
@@ -20,6 +20,13 @@ export default function App() {
       )}
       {players.data && (
         <TradeForm players={players.data} pending={analyze.isPending} onSubmit={analyze.mutate} />
+      )}
+
+      {analyze.isPending && analyze.failureCount > 0 && (
+        <p role="status" className="notice">
+          {analyze.failureReason?.message ?? 'Gemini is busy.'} Trying again in a few seconds… (retry{' '}
+          {analyze.failureCount} of {MAX_RETRIES})
+        </p>
       )}
 
       {analyze.isError && (

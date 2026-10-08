@@ -31,5 +31,7 @@ async def analyze(req: TradeRequest) -> TradeAnalysis:
     )
     try:
         return await gemini.analyze_trade(prompt)
+    except gemini.GeminiBusyError as e:
+        raise HTTPException(status_code=503, detail=str(e), headers={"Retry-After": "5"}) from e
     except gemini.GeminiError as e:
         raise HTTPException(status_code=502, detail=str(e)) from e
