@@ -44,7 +44,7 @@ See [Deployment](#deployment). The compose file (`backend/docker-compose.yaml`) 
 | `GEMINI_API_KEY` | yes | The app refuses to start without it. Set a spend cap on the key. |
 | `GEMINI_MODEL` | yes | e.g. `gemini-3.5-flash-lite` |
 | `NFL_SEASON` | yes | e.g. `2026` |
-| `CORS_ORIGINS` | yes | JSON list. Not used when the frontend proxies via Vercel rewrites, but still required. |
+| `CORS_ORIGINS` | yes | JSON list of the frontend origin(s), e.g. `["https://your-site.vercel.app"]`. The Vercel rewrite avoids CORS, but the app won't start without a valid value. |
 
 `POST /api/trades/analyze` is limited to 10 requests/minute per IP, and `/docs` is disabled.
 
