@@ -1,7 +1,11 @@
+import logging
+
 from fastapi import APIRouter, HTTPException
 
 from app.models import Player
 from app.services.players import get_players
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/players", tags=["players"])
 
@@ -11,4 +15,5 @@ async def list_players() -> list[Player]:
     try:
         return await get_players()
     except Exception as e:
-        raise HTTPException(status_code=502, detail=f"Failed to load players from ESPN: {e}") from e
+        logger.exception("Failed to load players from ESPN")
+        raise HTTPException(status_code=502, detail="Failed to load players from ESPN") from e

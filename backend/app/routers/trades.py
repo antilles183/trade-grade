@@ -1,18 +1,25 @@
-from fastapi import APIRouter, HTTPException
+import logging
+
+from fastapi import APIRouter, HTTPException, Request
 
 from app.models import TradeAnalysis, TradeRequest
+from app.ratelimit import limiter
 from app.services import gemini
 from app.services.players import get_players_by_id
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/trades", tags=["trades"])
 
 
 @router.post("/analyze", response_model=TradeAnalysis)
-async def analyze(req: TradeRequest) -> TradeAnalysis:
+@limiter.limit("10/minute")
+async def analyze(request: Request, req: TradeRequest) -> TradeAnalysis:
     try:
         by_id = await get_players_by_id()
     except Exception as e:
-        raise HTTPException(status_code=502, detail=f"Failed to load players from ESPN: {e}") from e
+        logger.exception("Failed to load players from ESPN")
+        raise HTTPException(status_code=502, detail="Failed to load players from ESPN") from e
 
     all_ids = req.giving + req.receiving + req.my_roster + req.their_roster
     unknown = sorted({pid for pid in all_ids if pid not in by_id})

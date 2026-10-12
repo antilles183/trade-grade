@@ -28,12 +28,30 @@ npm run dev            # http://localhost:5173, proxies /api to :8000
 
 ## Docker (backend)
 
-```bash
-cp backend/.env.example backend/.env   # set GEMINI_API_KEY (skip if already done)
-docker compose up --build
-```
+See [Deployment](#deployment). The compose stack (`backend/docker-compose.yml`) does not publish port 8000; to run the image directly for local testing: `docker build -t trade-grade-backend backend && docker run --rm -p 8000:8000 --env-file backend/.env trade-grade-backend`. Secrets come from `backend/.env` at runtime and are not baked into the image.
 
-The API is then on `http://localhost:8000`. Secrets come from `backend/.env` at runtime and are not baked into the image. Stop any local `uvicorn` on port 8000 first.
+## Deployment
+
+**Backend (self-hosted, Docker + Caddy for automatic HTTPS):**
+
+1. Point a DNS record (e.g. `api.example.com`) at the host and open ports 80/443.
+2. `cd backend && cp .env.example .env` and fill in the values below (including `BACKEND_DOMAIN`).
+3. `docker compose up -d --build`
+
+| Variable | Required | Notes |
+|---|---|---|
+| `GEMINI_API_KEY` | yes | The app refuses to start without it. Set a spend cap on the key. |
+| `GEMINI_MODEL` | yes | e.g. `gemini-3.5-flash-lite` |
+| `NFL_SEASON` | yes | e.g. `2026` |
+| `CORS_ORIGINS` | yes | JSON list. Not used when the frontend proxies via Vercel rewrites, but still required. |
+| `BACKEND_DOMAIN` | yes | Public hostname served by Caddy (read by compose; ignored by the app) |
+
+The backend is not published on the host; only Caddy (80/443) is. `POST /api/trades/analyze` is limited to 10 requests/minute per IP, and `/docs` is disabled.
+
+**Frontend (Vercel):**
+
+1. Import the repo with **Root Directory** `frontend` (Vite is auto-detected).
+2. Edit `frontend/vercel.json` and replace `api.example.com` with your `BACKEND_DOMAIN`. Requests to `/api/*` are rewritten to the backend, so the browser stays same-origin and no CORS setup is needed.
 
 ## API
 
