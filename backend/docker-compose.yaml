@@ -34,7 +34,7 @@ services:
       - caddy_config:/config
     depends_on:
       backend:
-        condition: service_healthy
+        condition: service_started #service_healthy
     restart: unless-stopped
     logging: *default-logging
 
