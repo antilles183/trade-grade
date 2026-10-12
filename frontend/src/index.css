@@ -16,21 +16,7 @@
   --good: var(--olive-leaf);
   --mid: #9a5a1a;
   --bad: #8c3b12;
-  color-scheme: light dark;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: var(--black-forest);
-    --fg: var(--cornsilk);
-    --muted: #c9c4a2;
-    --border: #4a5a30;
-    --accent: var(--sunlit-clay);
-    --on-accent: var(--black-forest);
-    --surface: #32441f;
-    --good: #a9ba6e;
-    --mid: var(--sunlit-clay);
-    --bad: #e08a4a;
-  }
+  color-scheme: light;
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system-ui, sans-serif; }
